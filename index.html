@@ -124,7 +124,7 @@
             });
         }
 
-        elements.sort((a, b) => a.color.localeCompare(b.color));
+        elements.sort((a, b) => a.element.localeCompare(b.element));
 
         let rows = '';
         elements.forEach(({ element, color }, index) => {
@@ -135,7 +135,7 @@
                     <td>
                         <div class="color-picker-container" id="color-picker-${index}"></div>
                     </td>
-                    <td><button class="btn apply-btn">Aplicar</button></td>
+                    <td><button class="btn apply-btn" data-index="${index}">Aplicar</button></td>
                 </tr>
             `;
         });
@@ -145,13 +145,6 @@
 
         elements.forEach(({ color }, index) => {
             initializePickr(index, color);
-        });
-
-        document.querySelectorAll('.apply-btn').forEach((button, index) => {
-            button.addEventListener('click', () => {
-                const newColor = document.getElementById(`color-picker-${index}`).dataset.newColor;
-                updateCSS(index, newColor);
-            });
         });
     }
 
@@ -175,12 +168,9 @@
             },
         });
 
-        pickr.on('change', (color) => {
-            const newColor = color.toHEXA().toString();
-            container.dataset.newColor = newColor;
-        });
-
         pickr.on('save', (color) => {
+            const newColor = color.toHEXA().toString();
+            updateCSS(index, newColor);
             pickr.hide();
         });
     }
