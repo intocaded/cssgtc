@@ -3,96 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gartic CSS Editor</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/themes/classic.min.css" /> <!-- Pickr CSS -->
+    <title>Editor de Cores CSS</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: space-between;
-            min-height: 100vh;
+            padding: 20px;
             background-color: #f9f9f9;
-            color: #333;
         }
         header {
             text-align: center;
-            padding: 20px;
-            background-color: #007bff;
-            color: white;
-            width: 100%;
+            margin-bottom: 20px;
         }
         table {
-            width: 90%;
+            width: 100%;
             border-collapse: collapse;
             margin-bottom: 20px;
         }
         th, td {
+            padding: 10px;
             border: 1px solid #ddd;
-            padding: 8px;
             text-align: left;
         }
         th {
             background-color: #f4f4f4;
         }
-        .color-picker-container {
-            display: flex;
-            align-items: center;
-            gap: 10px;
+        input[type="color"] {
+            border: none;
+            width: 100%;
+            height: 30px;
+            cursor: pointer;
         }
         .btn {
-            padding: 10px 15px;
+            display: inline-block;
+            padding: 10px 20px;
             background-color: #007bff;
-            color: #fff;
+            color: white;
+            text-align: center;
             border: none;
-            cursor: pointer;
             border-radius: 5px;
+            cursor: pointer;
         }
         .btn:hover {
             background-color: #0056b3;
-        }
-        footer {
-            text-align: center;
-            padding: 10px;
-            background-color: #007bff;
-            color: white;
-            width: 100%;
         }
     </style>
 </head>
 <body>
 
 <header>
-    <h1>Gartic CSS Editor</h1>
-    <p>Edite as cores dos elementos diretamente na tabela abaixo.</p>
+    <h1>Editor de Cores CSS</h1>
+    <p>Carregue um arquivo CSS, edite as cores e salve novamente.</p>
 </header>
 
 <input type="file" id="fileInput" accept=".css">
-<div id="editor" style="display:none;">
-    <h2>Tabela de Cores</h2>
+<div id="editor" style="display: none;">
+    <h2>Editar Cores</h2>
     <table>
         <thead>
             <tr>
-                <th>Nome do Elemento</th>
+                <th>Elemento</th>
                 <th>Cor Atual</th>
                 <th>Nova Cor</th>
-                <th>Ação</th>
             </tr>
         </thead>
         <tbody id="colorTable"></tbody>
     </table>
-    <button class="btn" id="saveBtn">Salvar Arquivo</button>
+    <button class="btn" id="saveBtn">Salvar Alterações</button>
 </div>
 
-<footer>
-    <p>Desenvolvido por Intocado BETA V3</p>
-    <p>© 2025. Todos os direitos reservados.</p>
-</footer>
-
-<script src="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/pickr.min.js"></script>
 <script>
     const fileInput = document.getElementById('fileInput');
     const colorTable = document.getElementById('colorTable');
@@ -100,6 +79,7 @@
     const saveBtn = document.getElementById('saveBtn');
     let cssContent = '';
 
+    // Manipulação do arquivo
     fileInput.addEventListener('change', function(event) {
         const file = event.target.files[0];
         if (file) {
@@ -112,6 +92,7 @@
         }
     });
 
+    // Analisar e exibir cores no CSS
     function parseCSS(css) {
         const regex = /([.#][^{\s]+)[^{}]*\{[^}]*color:\s*([^;]+);/g;
         let match;
@@ -119,62 +100,27 @@
 
         while ((match = regex.exec(css)) !== null) {
             elements.push({
-                element: match[1].trim(),
+                selector: match[1].trim(),
                 color: match[2].trim(),
             });
         }
 
-        elements.sort((a, b) => a.element.localeCompare(b.element));
-
         let rows = '';
-        elements.forEach(({ element, color }, index) => {
+        elements.forEach(({ selector, color }, index) => {
             rows += `
                 <tr>
-                    <td>${element}</td>
+                    <td>${selector}</td>
                     <td>${color}</td>
-                    <td>
-                        <div class="color-picker-container" id="color-picker-${index}"></div>
-                    </td>
-                    <td><button class="btn apply-btn" data-index="${index}">Aplicar</button></td>
+                    <td><input type="color" value="${color}" data-index="${index}" onchange="updateCSS(${index}, this.value)"></td>
                 </tr>
             `;
         });
 
         colorTable.innerHTML = rows;
         editor.style.display = 'block';
-
-        elements.forEach(({ color }, index) => {
-            initializePickr(index, color);
-        });
     }
 
-    function initializePickr(index, defaultColor) {
-        const container = document.getElementById(`color-picker-${index}`);
-        const pickr = Pickr.create({
-            el: container,
-            theme: 'classic',
-            default: defaultColor,
-            swatches: [
-                '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF', '#FFFFFF', '#000000'
-            ],
-            components: {
-                preview: true,
-                opacity: true,
-                hue: true,
-                interaction: {
-                    input: true,
-                    save: true,
-                },
-            },
-        });
-
-        pickr.on('save', (color) => {
-            const newColor = color.toHEXA().toString();
-            updateCSS(index, newColor);
-            pickr.hide();
-        });
-    }
-
+    // Atualizar a cor no conteúdo do CSS
     function updateCSS(index, newColor) {
         const regex = /([.#][^{\s]+)[^{}]*\{[^}]*color:\s*([^;]+);/g;
         let match;
@@ -188,15 +134,14 @@
             count++;
             return fullMatch;
         });
-
-        alert('Cor aplicada com sucesso!');
     }
 
+    // Salvar as alterações em um arquivo
     saveBtn.addEventListener('click', () => {
         const blob = new Blob([cssContent], { type: 'text/css' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = 'main.css';
+        a.download = 'edited.css';
         a.click();
     });
 </script>
