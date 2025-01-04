@@ -169,10 +169,9 @@
                         <td>${color}</td>
                         <td>
                             <div class="color-picker">
-                                <input type="color" value="${convertToHex(color)}">
+                                <input type="color" value="${convertToHex(color)}" class="color-input">
                                 <div class="color-preview" style="background-color: ${color};"></div>
-                                <input type="text" class="color-code" value="${convertToHex(color)}" readonly>
-                                <button class="btn copy-btn" data-color="${convertToHex(color)}">Copiar</button>
+                                <input type="text" class="color-code" value="${convertToHex(color)}">
                             </div>
                         </td>
                         <td><button class="btn apply-btn">Aplicar</button></td>
@@ -183,28 +182,21 @@
             colorTable.innerHTML = rows;
             editor.style.display = 'block';
 
+            document.querySelectorAll('.color-code').forEach((input, index) => {
+                input.addEventListener('input', () => {
+                    const newColor = input.value;
+                    const colorInput = input.parentElement.querySelector('.color-input');
+                    const preview = input.parentElement.querySelector('.color-preview');
+                    colorInput.value = newColor;
+                    preview.style.backgroundColor = newColor;
+                });
+            });
+
             document.querySelectorAll('.apply-btn').forEach((button, index) => {
                 button.addEventListener('click', () => {
-                    const colorInput = button.parentElement.previousElementSibling.querySelector('input[type="color"]');
+                    const colorInput = button.parentElement.previousElementSibling.querySelector('.color-input');
                     const newColor = colorInput.value;
                     updateCSS(index, newColor);
-                });
-            });
-
-            document.querySelectorAll('.copy-btn').forEach((button) => {
-                button.addEventListener('click', () => {
-                    const color = button.getAttribute('data-color');
-                    navigator.clipboard.writeText(color).then(() => {
-                        alert(`Cor ${color} copiada para a área de transferência!`);
-                    });
-                });
-            });
-
-            document.querySelectorAll('.color-code').forEach((input) => {
-                input.addEventListener('click', () => {
-                    navigator.clipboard.writeText(input.value).then(() => {
-                        alert(`Cor ${input.value} copiada para a área de transferência!`);
-                    });
                 });
             });
         }
