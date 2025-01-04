@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gartic CSS Editor</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/themes/classic.min.css" /> <!-- Pickr CSS -->
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -14,7 +15,6 @@
             align-items: center;
             justify-content: space-between;
             min-height: 100vh;
-            box-sizing: border-box;
             background-color: #f9f9f9;
             color: #333;
         }
@@ -29,7 +29,6 @@
             width: 90%;
             border-collapse: collapse;
             margin-bottom: 20px;
-            word-wrap: break-word;
         }
         th, td {
             border: 1px solid #ddd;
@@ -39,24 +38,10 @@
         th {
             background-color: #f4f4f4;
         }
-        .color-picker {
+        .color-picker-container {
             display: flex;
             align-items: center;
             gap: 10px;
-        }
-        .color-preview {
-            width: 20px;
-            height: 20px;
-            border: 1px solid #ccc;
-        }
-        .color-input {
-            width: 80px;
-            padding: 5px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 14px;
-            text-align: center;
-            cursor: pointer;
         }
         .btn {
             padding: 10px 15px;
@@ -69,10 +54,6 @@
         .btn:hover {
             background-color: #0056b3;
         }
-        #editor {
-            width: 100%;
-            overflow-x: auto;
-        }
         footer {
             text-align: center;
             padding: 10px;
@@ -80,162 +61,155 @@
             color: white;
             width: 100%;
         }
-        h1, p {
-            text-align: center;
-        }
-        @media (max-width: 768px) {
-            table {
-                font-size: 12px;
-            }
-            .btn {
-                padding: 8px 12px;
-                font-size: 12px;
-            }
-        }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1>Gartic CSS Editor</h1>
-        <p>Envie seu arquivo <code>main.css</code> para editar as cores dos elementos.</p>
-    </header>
+<header>
+    <h1>Gartic CSS Editor</h1>
+    <p>Edite as cores dos elementos diretamente na tabela abaixo.</p>
+</header>
 
-    <input type="file" id="fileInput" accept=".css">
-    <div id="editor" style="display:none;">
-        <h2>Tabela de Cores</h2>
-        <table>
-            <thead>
+<input type="file" id="fileInput" accept=".css">
+<div id="editor" style="display:none;">
+    <h2>Tabela de Cores</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Nome do Elemento</th>
+                <th>Cor Atual</th>
+                <th>Nova Cor</th>
+                <th>Ação</th>
+            </tr>
+        </thead>
+        <tbody id="colorTable"></tbody>
+    </table>
+    <button class="btn" id="saveBtn">Salvar Arquivo</button>
+</div>
+
+<footer>
+    <p>Desenvolvido por Intocado BETA V3</p>
+    <p>© 2025. Todos os direitos reservados.</p>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/pickr.min.js"></script>
+<script>
+    const fileInput = document.getElementById('fileInput');
+    const colorTable = document.getElementById('colorTable');
+    const editor = document.getElementById('editor');
+    const saveBtn = document.getElementById('saveBtn');
+    let cssContent = '';
+
+    fileInput.addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                cssContent = e.target.result;
+                parseCSS(cssContent);
+            };
+            reader.readAsText(file);
+        }
+    });
+
+    function parseCSS(css) {
+        const regex = /([.#][^{\s]+)[^{}]*\{[^}]*color:\s*([^;]+);/g;
+        let match;
+        let elements = [];
+
+        while ((match = regex.exec(css)) !== null) {
+            elements.push({
+                element: match[1].trim(),
+                color: match[2].trim(),
+            });
+        }
+
+        elements.sort((a, b) => a.color.localeCompare(b.color));
+
+        let rows = '';
+        elements.forEach(({ element, color }, index) => {
+            rows += `
                 <tr>
-                    <th>Nome do Elemento</th>
-                    <th>Cor Atual</th>
-                    <th>Nova Cor</th>
-                    <th>Ação</th>
+                    <td>${element}</td>
+                    <td>${color}</td>
+                    <td>
+                        <div class="color-picker-container" id="color-picker-${index}"></div>
+                    </td>
+                    <td><button class="btn apply-btn">Aplicar</button></td>
                 </tr>
-            </thead>
-            <tbody id="colorTable"></tbody>
-        </table>
-        <button class="btn" id="saveBtn">Salvar Arquivo</button>
-    </div>
-
-    <footer>
-        <p>Desenvolvido por Intocado BETA V3</p>
-        <p>© 2025. Todos os direitos reservados.</p>
-    </footer>
-
-    <script>
-        const fileInput = document.getElementById('fileInput');
-        const colorTable = document.getElementById('colorTable');
-        const editor = document.getElementById('editor');
-        const saveBtn = document.getElementById('saveBtn');
-
-        let cssContent = '';
-
-        fileInput.addEventListener('change', function(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    cssContent = e.target.result;
-                    parseCSS(cssContent);
-                };
-                reader.readAsText(file);
-            }
+            `;
         });
 
-        function parseCSS(css) {
-            const regex = /([.#][^{\s]+)[^{}]*\{[^}]*color:\s*([^;]+);/g;
-            let match;
-            let elements = [];
+        colorTable.innerHTML = rows;
+        editor.style.display = 'block';
 
-            while ((match = regex.exec(css)) !== null) {
-                elements.push({
-                    element: match[1].trim(),
-                    color: match[2].trim(),
-                });
-            }
+        elements.forEach(({ color }, index) => {
+            initializePickr(index, color);
+        });
 
-            elements.sort((a, b) => a.color.localeCompare(b.color));
-
-            let rows = '';
-            elements.forEach(({ element, color }, index) => {
-                rows += `
-                    <tr>
-                        <td>${element}</td>
-                        <td>${color}</td>
-                        <td>
-                            <div class="color-picker">
-                                <input type="color" value="${convertToHex(color)}" class="color-input" data-index="${index}">
-                                <div class="color-preview" style="background-color: ${color};"></div>
-                            </div>
-                        </td>
-                        <td><button class="btn apply-btn">Aplicar</button></td>
-                    </tr>
-                `;
+        document.querySelectorAll('.apply-btn').forEach((button, index) => {
+            button.addEventListener('click', () => {
+                const newColor = document.getElementById(`color-picker-${index}`).dataset.newColor;
+                updateCSS(index, newColor);
             });
+        });
+    }
 
-            colorTable.innerHTML = rows;
-            editor.style.display = 'block';
+    function initializePickr(index, defaultColor) {
+        const container = document.getElementById(`color-picker-${index}`);
+        const pickr = Pickr.create({
+            el: container,
+            theme: 'classic',
+            default: defaultColor,
+            swatches: [
+                '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF', '#FFFFFF', '#000000'
+            ],
+            components: {
+                preview: true,
+                opacity: true,
+                hue: true,
+                interaction: {
+                    input: true,
+                    save: true,
+                },
+            },
+        });
 
-            document.querySelectorAll('.color-input').forEach((input, index) => {
-                input.addEventListener('input', (e) => {
-                    const newColor = e.target.value;
-                    const preview = e.target.nextElementSibling;
-                    preview.style.backgroundColor = newColor;
-                });
+        pickr.on('change', (color) => {
+            const newColor = color.toHEXA().toString();
+            container.dataset.newColor = newColor;
+        });
 
-                input.addEventListener('paste', (e) => {
-                    e.preventDefault();
-                    const pastedText = e.clipboardData.getData('text');
-                    if (/^#[0-9A-Fa-f]{6}$/.test(pastedText)) {
-                        e.target.value = pastedText;
-                        e.target.dispatchEvent(new Event('input'));
-                    } else {
-                        alert("Insira um código de cor válido em formato hexadecimal.");
-                    }
-                });
-            });
+        pickr.on('save', (color) => {
+            pickr.hide();
+        });
+    }
 
-            document.querySelectorAll('.apply-btn').forEach((button, index) => {
-                button.addEventListener('click', () => {
-                    const colorInput = document.querySelector(`.color-input[data-index="${index}"]`);
-                    const newColor = colorInput.value;
-                    updateCSS(index, newColor);
-                });
-            });
-        }
+    function updateCSS(index, newColor) {
+        const regex = /([.#][^{\s]+)[^{}]*\{[^}]*color:\s*([^;]+);/g;
+        let match;
+        let count = 0;
 
-        function updateCSS(index, newColor) {
-            const regex = /([.#][^{\s]+)[^{}]*\{[^}]*color:\s*([^;]+);/g;
-            let match;
-            let count = 0;
-
-            cssContent = cssContent.replace(regex, (fullMatch, selector, color) => {
-                if (count === index) {
-                    count++;
-                    return fullMatch.replace(color, newColor);
-                }
+        cssContent = cssContent.replace(regex, (fullMatch, selector, color) => {
+            if (count === index) {
                 count++;
-                return fullMatch;
-            });
-
-            alert('Cor aplicada com sucesso!');
-        }
-
-        function convertToHex(color) {
-            const ctx = document.createElement('canvas').getContext('2d');
-            ctx.fillStyle = color;
-            return ctx.fillStyle;
-        }
-
-        saveBtn.addEventListener('click', () => {
-            const blob = new Blob([cssContent], { type: 'text/css' });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = 'main.css';
-            a.click();
+                return fullMatch.replace(color, newColor);
+            }
+            count++;
+            return fullMatch;
         });
-    </script>
+
+        alert('Cor aplicada com sucesso!');
+    }
+
+    saveBtn.addEventListener('click', () => {
+        const blob = new Blob([cssContent], { type: 'text/css' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'main.css';
+        a.click();
+    });
+</script>
 
 </body>
 </html>
