@@ -77,6 +77,18 @@
         h1, p {
             text-align: center;
         }
+        .color-code {
+    width: 80px;
+    padding: 5px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 14px;
+    text-align: center;
+    margin-left: 10px;
+    background-color: #fff;
+    cursor: pointer;
+}
+
         @media (max-width: 768px) {
             table {
                 font-size: 12px;
@@ -158,12 +170,14 @@
                         <td>${element}</td>
                         <td>${color}</td>
                         <td>
-                            <div class="color-picker">
-                                <input type="color" value="${convertToHex(color)}">
-                                <div class="color-preview" style="background-color: ${color};"></div>
-                                <button class="btn copy-btn" data-color="${color}">Copiar</button>
-                            </div>
-                        </td>
+    <div class="color-picker">
+        <input type="color" value="${convertToHex(color)}">
+        <div class="color-preview" style="background-color: ${color};"></div>
+        <input type="text" class="color-code" value="${convertToHex(color)}" readonly>
+        <button class="btn copy-btn" data-color="${convertToHex(color)}">Copiar</button>
+    </div>
+</td>
+
                         <td><button class="btn apply-btn">Aplicar</button></td>
                     </tr>
                 `;
@@ -181,14 +195,21 @@
             });
 
             document.querySelectorAll('.copy-btn').forEach((button) => {
-                button.addEventListener('click', () => {
-                    const color = button.getAttribute('data-color');
-                    navigator.clipboard.writeText(color).then(() => {
-                        alert(`Cor ${color} copiada para a área de transferência!`);
-                    });
-                });
-            });
-        }
+    button.addEventListener('click', () => {
+        const color = button.previousElementSibling.value;
+        navigator.clipboard.writeText(color).then(() => {
+            alert(`Cor ${color} copiada para a área de transferência!`);
+        });
+    });
+});
+
+document.querySelectorAll('.color-code').forEach((input) => {
+    input.addEventListener('click', () => {
+        navigator.clipboard.writeText(input.value).then(() => {
+            alert(`Cor ${input.value} copiada para a área de transferência!`);
+        });
+    });
+});
 
         function updateCSS(index, newColor) {
             const regex = /([.#][^{\s]+)[^{}]*\{[^}]*color:\s*([^;]+);/g;
